@@ -76,6 +76,9 @@ logs/
 *.log
 application.log
 
+# But keep ai.log for development tracking
+!ai.log
+
 # Database
 *.db
 *.sqlite
