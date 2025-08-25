@@ -79,9 +79,9 @@ class RedisOfferConnector[F[_]: Async](redis: RedisCommands[F, String, String])
     for {
       json <- Async[F].delay(offer.asJson.noSpaces)
       _ <- redis.setEx(offerKey(offer.id), json, DEFAULT_EXPIRY)
-      _ <- redis.zAdd(userOffersKey(offer.userId), offer.createdAt.toEpochMilli.toDouble, offer.id.value)
-      _ <- redis.zAdd(symbolOffersKey(offer.symbol), priceScore(offer), offer.id.value)
-      _ <- redis.sAdd(activeOffersKey, offer.id.value)
+      _ <- redis.zAdd(userOffersKey(offer.userId), offer.createdAt.toEpochMilli.toDouble, offer.offerId.value)
+      _ <- redis.zAdd(symbolOffersKey(offer.symbol), priceScore(offer), offer.offerId.value)
+      _ <- redis.sAdd(activeOffersKey, offer.offerId.value)
     } yield Right(offer)
   }.handleError(error => Left(ConnectionError(s"Failed to create offer: ${error.getMessage}", Some(error))))
 
@@ -91,17 +91,17 @@ class RedisOfferConnector[F[_]: Async](redis: RedisCommands[F, String, String])
       result <- if (exists) {
         for {
           json <- Async[F].delay(offer.asJson.noSpaces)
-          _ <- redis.setEx(offerKey(offer.id), json, DEFAULT_EXPIRY)
-          _ <- redis.zAdd(symbolOffersKey(offer.symbol), priceScore(offer), offer.id.value)
+          _ <- redis.setEx(offerKey(offer.offerId), json, DEFAULT_EXPIRY)
+          _ <- redis.zAdd(symbolOffersKey(offer.symbol), priceScore(offer), offer.offerId.value)
         } yield Right(offer)
       } else {
-        Async[F].pure(Left(NotFoundError(s"Offer ${offer.id.value} not found")))
+        Async[F].pure(Left(NotFoundError(s"Offer ${offer.offerId.value} not found")))
       }
     } yield result
   }.handleError(error => Left(ConnectionError(s"Failed to update offer: ${error.getMessage}", Some(error))))
 
-  override def getOffer(id: OfferId): F[Either[ConnectorError, Option[Offer]]] = {
-    redis.get(offerKey(id)).map {
+  override def getOffer(offerId: OfferId): F[Either[ConnectorError, Option[Offer]]] = {
+    redis.get(offerKey(offerId)).map {
       case Some(json) =>
         decode[Offer](json) match {
           case Right(offer) => Right(Some(offer))
@@ -111,22 +111,22 @@ class RedisOfferConnector[F[_]: Async](redis: RedisCommands[F, String, String])
     }.handleError(error => Left(ConnectionError(s"Failed to get offer: ${error.getMessage}", Some(error))))
   }
 
-  override def cancelOffer(id: OfferId, userId: UserId): F[Either[ConnectorError, Unit]] = {
+  override def cancelOffer(offerId: OfferId, userId: UserId): F[Either[ConnectorError, Unit]] = {
     for {
-      offerOpt <- getOffer(id)
+      offerOpt <- getOffer(offerId)
       result <- offerOpt match {
         case Right(Some(offer)) if offer.userId == userId =>
           for {
             cancelledOffer = offer.copy(status = OfferStatus.Cancelled)
             json <- Async[F].delay(cancelledOffer.asJson.noSpaces)
-            _ <- redis.setEx(offerKey(id), json, DEFAULT_EXPIRY)
-            _ <- redis.sRem(activeOffersKey, id.value)
-            _ <- redis.zRem(symbolOffersKey(offer.symbol), id.value)
+            _ <- redis.setEx(offerKey(offerId), json, DEFAULT_EXPIRY)
+            _ <- redis.sRem(activeOffersKey, offerId.value)
+            _ <- redis.zRem(symbolOffersKey(offer.symbol), offerId.value)
           } yield Right(())
         case Right(Some(_)) =>
-          Async[F].pure(Left(PermissionError(s"User $userId cannot cancel offer $id")))
+          Async[F].pure(Left(PermissionError(s"User $userId cannot cancel offer $offerId")))
         case Right(None) =>
-          Async[F].pure(Left(NotFoundError(s"Offer $id not found")))
+          Async[F].pure(Left(NotFoundError(s"Offer $offerId not found")))
         case Left(error) =>
           Async[F].pure(Left(error))
       }
@@ -222,10 +222,10 @@ class RedisOfferConnector[F[_]: Async](redis: RedisCommands[F, String, String])
   override def expireOffers(before: Instant): F[Either[ConnectorError, Int]] = {
     for {
       activeOfferIds <- redis.sMembers(activeOffersKey)
-      expiredCount <- activeOfferIds.foldLeftM(0) { (count, offerId) =>
-        getOffer(OfferId(offerId)).flatMap {
+      expiredCount <- activeOfferIds.foldLeftM(0) { (count, offerIdValue) =>
+        getOffer(OfferId(offerIdValue)).flatMap {
           case Right(Some(offer)) if offer.expiresAt.isBefore(before) =>
-            cancelOffer(offer.id, offer.userId).map(_ => count + 1)
+            cancelOffer(offer.offerId, offer.userId).map(_ => count + 1)
           case _ => Async[F].pure(count)
         }
       }
@@ -265,7 +265,7 @@ object RedisOfferConnector {
   private val DEFAULT_EXPIRY = 24.hours
   private val DEFAULT_LIMIT = 100
   
-  private def offerKey(id: OfferId): String = s"$OFFER_PREFIX:${id.value}"
+  private def offerKey(offerId: OfferId): String = s"$OFFER_PREFIX:${offerId.value}"
   private def userOffersKey(userId: UserId): String = s"$USER_OFFERS_PREFIX:${userId.value}"
   private def symbolOffersKey(symbol: TradingSymbol): String = s"$SYMBOL_OFFERS_PREFIX:${symbol.value}"
   private def symbolOffersKey(symbol: TradingSymbol, offerType: OfferType): String = 

@@ -44,8 +44,8 @@ trait OfferConnector[F[_]] extends Connector[F] {
   // Core offer operations
   def createOffer(offer: Offer): F[Either[ConnectorError, Offer]]
   def updateOffer(offer: Offer): F[Either[ConnectorError, Offer]]
-  def getOffer(id: OfferId): F[Either[ConnectorError, Option[Offer]]]
-  def cancelOffer(id: OfferId, userId: UserId): F[Either[ConnectorError, Unit]]
+  def getOffer(offerId: OfferId): F[Either[ConnectorError, Option[Offer]]]
+  def cancelOffer(offerId: OfferId, userId: UserId): F[Either[ConnectorError, Unit]]
   
   // Query operations
   def getUserOffers(userId: UserId, limit: Option[Int] = None): F[Either[ConnectorError, List[Offer]]]
@@ -69,7 +69,7 @@ trait TradeConnector[F[_]] extends Connector[F] {
   
   // Core trade operations
   def recordTrade(trade: Trade): F[Either[ConnectorError, Trade]]
-  def getTrade(id: TradeId): F[Either[ConnectorError, Option[Trade]]]
+  def getTrade(tradeId: TradeId): F[Either[ConnectorError, Option[Trade]]]
   
   // Query operations
   def getUserTrades(userId: UserId, limit: Option[Int] = None): F[Either[ConnectorError, List[Trade]]]
