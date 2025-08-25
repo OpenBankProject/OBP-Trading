@@ -326,6 +326,8 @@ package object model {
     purpose: String, // "offer_creation", "trade_settlement"
     offerId: Option[OfferId] = None,
     tradeId: Option[TradeId] = None,
+    holdId: Option[String] = None, // ID of the hold in external system (e.g., OBP-API)
+    transactionRequestId: Option[String] = None, // Transaction request ID
     createdAt: Instant,
     expiresAt: Instant,
     isActive: Boolean = true
