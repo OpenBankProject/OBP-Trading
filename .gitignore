@@ -1,0 +1,135 @@
+# Scala and SBT
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# SBT specific
+target/
+project/target/
+project/project/target/
+project/boot/
+project/plugins/project/
+.history
+.cache
+.lib/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+.metals/
+.bloop/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# Mac
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+logs/
+*.log
+application.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with secrets
+*.env
+.env
+.env.local
+.env.*.local
+application.secret.conf
+local.conf
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Node.js (if using frontend tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test reports
+test-reports/
+TEST-*.xml
+
+# Coverage reports
+scoverage-data/
+scoverage-report/
+.coverage/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+.#*
+\#*#
+.*.swp
+.*.swo
+
+# Package Files
+*.tgz
+
+# ENSIME (if using)
+.ensime
+.ensime_cache/
+
+# Akka
+akka.log
+
+# Redis dump files
+dump.rdb
+
+# Build artifacts
+dist/
+build/
